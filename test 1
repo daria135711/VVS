@@ -1,0 +1,10 @@
+import os
+
+def count_files(directory):
+    file_count = 0
+    for files in os.walk(directory):
+        file_count += len(files)
+    return file_count
+directory = input("Введите путь к папке: ")
+total_files = count_files(directory)
+print(f"Общее количество файлов в папке: {total_files}")
