@@ -1,0 +1,87 @@
+import os
+import time
+from collections import defaultdict
+
+
+def scan_directory(directory):
+    empty_files = []
+    largest_file = {"path": "", "size": 0}
+    file_stats = defaultdict(list)
+    total_files = 0
+    total_size = 0
+
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            total_files += 1
+            file_path = os.path.join(root, file)
+            file_size = os.path.getsize(file_path)
+            total_size += file_size
+
+            if file_size == 0:
+                empty_files.append(file_path)
+
+
+            if file_size > largest_file["size"]:
+                largest_file["path"] = file_path
+                largest_file["size"] = file_size
+
+            file_ext = os.path.splitext(file)[1].lower()
+            file_stats[file_ext].append(file_size)
+
+    return {
+        "empty_files": empty_files,
+        "largest_file": largest_file,
+        "file_stats": file_stats,
+        "total_files": total_files,
+        "total_size": total_size
+    }
+
+
+def generate_report(stats, report_file):
+    with open(report_file, 'w', encoding='utf-8') as f:
+        f.write("---------Файловый отчет---------\n")
+        f.write(f"Дата создания: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+        f.write("Общая статистика:\n")
+        f.write(f"Всего файлов: {stats['total_files']}\n")
+        f.write(f"Общий размер: {stats['total_size'] / (1024 * 1024):.2f} MB\n\n")
+
+        f.write("Пустые файлы (0 байт):\n")
+        if stats['empty_files']:
+            for file in stats['empty_files']:
+                f.write(f"- {file}\n")
+            f.write(f"Всего пустых файлов: {len(stats['empty_files'])}\n")
+        else:
+            f.write("Пустых файлов не найдено\n")
+        f.write("\n")
+
+        f.write("Самый большой файл:\n")
+        if stats['largest_file']['path']:
+            f.write(f"Путь: {stats['largest_file']['path']}\n")
+            f.write(f"Размер: {stats['largest_file']['size'] / (1024 * 1024):.2f} MB\n")
+        else:
+            f.write("Файлов не найдено\n")
+        f.write("\n")
+
+        f.write("Статистика по расширениям:\n")
+        for ext, sizes in stats['file_stats'].items():
+            ext = ext if ext else "без расширения"
+            f.write(f"{ext}: {len(sizes)} файлов, {sum(sizes) / 1024:.2f} KB\n")
+
+
+def main():
+    directory = input("Введите путь к папке для сканирования: ")
+    report_file = "file_report.txt"
+
+    if not os.path.isdir(directory):
+        print("Ошибка: указанная папка не существует")
+        return
+
+    print("Сканирование...")
+    stats = scan_directory(directory)
+    generate_report(stats, report_file)
+    print(f"Отчет сохранен в файл: {report_file}")
+
+
+if __name__ == "__main__":
+    main()
